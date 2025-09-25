@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Energy Unit Calculator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            direction: rtl;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 450px;
+            margin: 2rem auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        header h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            font-size: 1rem;
+            color: #444;
+            margin-bottom: 0.5rem;
+        }
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s;
+        }
+        input[type="number"]:focus,
+        input[type="text"]:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        input[readonly] {
+            background-color: #f7f7f7;
+        }
+        .results .result-item {
+            margin-bottom: 1rem;
+        }
+        button {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .reset-btn {
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .reset-btn a {
+            font-size: 0.9rem;
+            color: #007bff;
+            text-decoration: none;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+        .reset-btn a:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>بجلی یونٹ حساب</h1>
+        </header>
+        <div class="form">
+            <div class="input-group">
+                <label for="voltage">وولٹیج (V)</label>
+                <input type="number" id="voltage" value="220" min="1" />
+            </div>
+            <div class="input-group">
+                <label for="current">ایمپئیر (A)</label>
+                <input type="number" id="current" value="" min="0" step="any" />
+            </div>
+            <div class="input-group">
+                <label for="power">واٹ (W)</label>
+                <input type="number" id="power" value="" min="0" step="any" />
+            </div>
+            <div class="input-group">
+                <label for="hours">روزانہ استعمال (گھنٹے)</label>
+                <input type="number" id="hours" value="" min="0" step="any" />
+            </div>
+            <div class="input-group">
+                <label for="unitPrice">یونٹ قیمت (روپے)</label>
+                <input type="number" id="unitPrice" value="35" min="0" step="0.01" />
+            </div>
+            <div class="results">
+                <div class="result-item">
+                    <label>یونٹس (kWh)</label>
+                    <input type="text" id="units" readonly />
+                </div>
+                <div class="result-item">
+                    <label>ماہانہ یونٹس</label>
+                    <input type="text" id="monthlyUnits" readonly />
+                </div>
+                <div class="result-item">
+                    <label>ماہانہ بل (روپے)</label>
+                    <input type="text" id="monthlyBill" readonly />
+                </div>
+            </div>
+            <div class="form-actions">
+                <button id="convertBtn">حساب کریں</button>
+            </div>
+            <div class="reset-btn">
+                <a id="resetBtn">ری سیٹ کریں</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const voltageInput = document.getElementById('voltage');
+            const currentInput = document.getElementById('current');
+            const powerInput = document.getElementById('power');
+            const hoursInput = document.getElementById('hours');
+            const unitPriceInput = document.getElementById('unitPrice');
+            const unitsOutput = document.getElementById('units');
+            const monthlyUnitsOutput = document.getElementById('monthlyUnits');
+            const monthlyBillOutput = document.getElementById('monthlyBill');
+            const convertBtn = document.getElementById('convertBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            let isUpdating = false; // Flag to avoid infinite loop
+            // Update Watts when Amperes change
+            currentInput.addEventListener('input', () => {
+                if (isUpdating) return;
+                isUpdating = true;
+                const voltage = Number(voltageInput.value);
+                const current = Number(currentInput.value);
+                if (voltage > 0 && current >= 0) {
+                    powerInput.value = (voltage * current).toFixed(2);
+                } else {
+                    powerInput.value = '';
+                }
+                isUpdating = false;
+            });
+            // Update Amperes when Watts change
+            powerInput.addEventListener('input', () => {
+                if (isUpdating) return;
+                isUpdating = true;
+                const voltage = Number(voltageInput.value);
+                const power = Number(powerInput.value);
+                if (voltage > 0 && power >= 0) {
+                    currentInput.value = (power / voltage).toFixed(2);
+                } else {
+                    currentInput.value = '';
+                }
+                isUpdating = false;
+            });
+            // Calculate results
+            convertBtn.addEventListener('click', () => {
+                const power = Number(powerInput.value);
+                const hours = Number(hoursInput.value);
+                const unitPrice = Number(unitPriceInput.value);
+                // Basic validation
+                if (power <= 0 || hours < 0 || isNaN(power) || isNaN(hours) || unitPrice < 0) {
+                    alert('براہِ کرم درست اعداد داخل کریں۔');
+                    return;
+                }
+                // Calculate units (daily)
+                const units = (power * hours) / 1000;
+                // Monthly units
+                const monthlyUnits = units * 30;
+                // Monthly bill (daily bill * 30)
+                const monthlyBill = (hours * unitPrice) * 30;
+                unitsOutput.value = `${units.toFixed(3)} kWh`;
+                monthlyUnitsOutput.value = `${monthlyUnits.toFixed(2)} kWh`;
+                monthlyBillOutput.value = `${monthlyBill.toFixed(2)} روپے`;
+            });
+            // Reset button behavior
+            resetBtn.addEventListener('click', () => {
+                voltageInput.value = 220;
+                currentInput.value = '';
+                powerInput.value = '';
+                hoursInput.value = '';
+                unitPriceInput.value = 35;
+                unitsOutput.value = '';
+                monthlyUnitsOutput.value = '';
+                monthlyBillOutput.value = '';
+            });
+        });
+    </script>
+</body>
+</html>
